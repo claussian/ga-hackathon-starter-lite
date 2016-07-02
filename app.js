@@ -24,11 +24,7 @@ const upload = multer({ dest: path.join(__dirname, 'uploads') });
  */
 dotenv.load({ path: '.env.example' });
 
-/**
- * Controllers (route handlers).
- */
-const homeController = require('./controllers/home');
-const userController = require('./controllers/user');
+
 
 /**
  * API keys and Passport configuration.
@@ -98,6 +94,16 @@ next();
 });
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: 31557600000 }));
 
+
+/**
+ * Controllers (route handlers).
+ */
+const homeController = require('./controllers/home');
+const userController = require('./controllers/user');
+
+
+
+
 /**
  * Primary app routes.
  */
@@ -111,8 +117,19 @@ app.get('/reset/:token', userController.getReset);
 app.post('/reset/:token', userController.postReset);
 app.get('/signup', userController.getSignup);
 app.post('/signup', userController.postSignup);
+app.get('/account', passportConfig.isAuthenticated, userController.getAccount);
+app.post('/account/profile', passportConfig.isAuthenticated, userController.postUpdateProfile);
+app.post('/account/password', passportConfig.isAuthenticated, userController.postUpdatePassword);
+app.post('/account/delete', passportConfig.isAuthenticated, userController.postDeleteAccount);
+app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userController.getOauthUnlink);
 
-
+/**
+ * Passport routes
+ */
+app.get('/auth/facebook', passport.authenticate('facebook', { scope: ['email', 'user_location'] }));
+app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/login' }), (req, res) => {
+    res.redirect(req.session.returnTo || '/');
+});
 
 /**
  * Error Handler.
